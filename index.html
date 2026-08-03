@@ -163,10 +163,10 @@
 
     // --- 4. SYNC WITH JSONBIN ---
     async function fetchData() {
-        if (BIN_ID === "YOUR_JSONBIN_BIN_ID") return;
+        if (BIN_ID === "6a702ebef5f4af5e29e3a2a0") return;
         try {
             const res = await fetch(API_URL, {
-                headers: { "X-Master-Key": API_KEY }
+                headers: { "X-Master-Key": $2a$10$GE4N2XeGa6JxUbuB5bQ0eOUzdj97wKhL0O8bzPYjQ8DVWzwjB57Wi }
             });
             const data = await res.json();
             dbData = data.record || { inventory: {}, submissions: [] };
@@ -178,13 +178,13 @@
     }
 
     async function saveData() {
-        if (BIN_ID === "YOUR_JSONBIN_BIN_ID") return;
+        if (BIN_ID === "6a702ebef5f4af5e29e3a2a0") return;
         try {
             await fetch(API_URL, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-Master-Key": API_KEY
+                    "X-Master-Key": $2a$10$GE4N2XeGa6JxUbuB5bQ0eOUzdj97wKhL0O8bzPYjQ8DVWzwjB57Wi
                 },
                 body: JSON.stringify(dbData)
             });
