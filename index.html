@@ -20,7 +20,7 @@
         /* Wheel Canvas */
         #wheelCanvas { width: 100%; max-width: 300px; height: auto; display: block; margin: 0 auto; }
         button { background: #28a745; color: white; border: none; padding: 10px 20px; font-size: 1rem; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 10px; }
-        button:disabled { background: #ccc; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
         
         /* Teacher Dashboard */
         .teacher-panel { grid-column: span 2; }
@@ -82,8 +82,10 @@
 
 <script>
     // --- 1. CONFIGURATION ---
+    // ⚠️ REPLACE THESE TWO STRINGS WITH YOUR ACTUAL KEYS FROM JSONBIN.IO
     const BIN_ID = "YOUR_JSONBIN_BIN_ID";
     const API_KEY = "YOUR_JSONBIN_MASTER_KEY";
+    
     const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
     // --- 2. ALL 48 ITEMS ---
@@ -163,13 +165,15 @@
 
     let selectedItem = null;
     let selectedRule = null;
+    let hasSpun = false; // Prevents multiple spins for the same item
     let dbData = { inventory: {}, submissions: [] };
 
     // --- 4. SYNC WITH JSONBIN ---
     async function fetchData() {
-        if (BIN_ID === "YOUR_JSONBIN_BIN_ID") return;
+        if (BIN_ID === "YOUR_JSONBIN_BIN_ID" || !BIN_ID) return;
         try {
             const res = await fetch(API_URL, {
+                method: "GET",
                 headers: { "X-Master-Key": API_KEY }
             });
             const data = await res.json();
@@ -177,12 +181,12 @@
             renderItems();
             renderDashboard();
         } catch (e) {
-            console.error("Error fetching data", e);
+            console.error("Error fetching data:", e);
         }
     }
 
     async function saveData() {
-        if (BIN_ID === "YOUR_JSONBIN_BIN_ID") return;
+        if (BIN_ID === "YOUR_JSONBIN_BIN_ID" || !BIN_ID) return;
         try {
             await fetch(API_URL, {
                 method: "PUT",
@@ -194,11 +198,11 @@
             });
             fetchData();
         } catch (e) {
-            console.error("Error saving data", e);
+            console.error("Error saving data:", e);
         }
     }
 
-    // Auto-poll every 3 seconds for live sync
+    // Auto-poll every 3 seconds
     setInterval(fetchData, 3000);
 
     function renderItems() {
@@ -213,8 +217,16 @@
             if (qty > 0) {
                 div.onclick = () => {
                     selectedItem = item;
+                    hasSpun = false; // Reset spin restriction for newly selected item
+                    
+                    // Reset UI elements
                     document.getElementById('selectedItemName').innerText = item.name;
                     document.getElementById('selectedItemPrice').innerText = item.price.toFixed(2);
+                    document.getElementById('calcSection').style.display = 'none';
+                    document.getElementById('feedback').innerText = '';
+                    document.getElementById('studentAnswer').value = '';
+                    document.getElementById('spinBtn').disabled = false;
+                    
                     renderItems();
                 };
             }
@@ -239,9 +251,6 @@
             tbody.appendChild(row);
         });
     }
-
-    // Initial render
-    renderItems();
 
     // --- 5. WHEEL DRAWING ---
     const canvas = document.getElementById('wheelCanvas');
@@ -275,12 +284,12 @@
         ctx.moveTo(140, 10); ctx.lineTo(160, 10); ctx.lineTo(150, 30);
         ctx.fill();
     }
-    drawWheel();
 
     function spinWheel() {
         if (!selectedItem) { alert("Please select an item first!"); return; }
         const studentName = document.getElementById('studentName').value.trim();
         if (!studentName) { alert("Please enter your name first!"); return; }
+        if (hasSpun) { alert("You have already spun for this item. Select another item to spin again."); return; }
 
         document.getElementById('spinBtn').disabled = true;
         let startAngle = 0;
@@ -304,10 +313,10 @@
                 let winningIndex = Math.floor(((Math.PI * 2 - (finalAngle % (Math.PI * 2))) + Math.PI * 1.5) % (Math.PI * 2) / sliceArc);
                 selectedRule = wheelOptions[winningIndex];
 
+                hasSpun = true; // Mark item as spun
                 document.getElementById('wheelResultText').innerText = selectedRule.label;
                 document.getElementById('calcSection').style.display = 'block';
                 document.getElementById('feedback').innerText = '';
-                document.getElementById('spinBtn').disabled = false;
             }
         }
         requestAnimationFrame(animateWheel);
@@ -325,7 +334,7 @@
             return; 
         }
 
-        // Decimal validation (disallow 1 decimal place or >2 decimal places)
+        // Decimal Validation Rule (Whole numbers or exactly 2 decimal places)
         if (rawInput.includes('.')) {
             const decimalPlaces = rawInput.split('.')[1].length;
             if (decimalPlaces !== 2) {
@@ -335,6 +344,7 @@
             }
         }
 
+        // Calculate expected answer
         let correctPrice = selectedItem.price;
         if (selectedRule.type === 'discount') {
             correctPrice = correctPrice * (1 - selectedRule.val);
@@ -350,6 +360,7 @@
             feedbackEl.innerText = "🎉 Correct! Good job!";
             feedbackEl.style.color = "green";
 
+            // Reduce item stock by 1
             const currentQty = dbData.inventory[selectedItem.id] !== undefined ? dbData.inventory[selectedItem.id] : 2;
             dbData.inventory[selectedItem.id] = Math.max(0, currentQty - 1);
         } else {
@@ -357,6 +368,7 @@
             feedbackEl.style.color = "red";
         }
 
+        // Add to live submissions list
         if (!dbData.submissions) dbData.submissions = [];
         dbData.submissions.push({
             studentName,
@@ -384,6 +396,10 @@
             alert("Incorrect password!");
         }
     }
+
+    // Initial render call
+    fetchData();
+    drawWheel();
 </script>
 
 </body>
