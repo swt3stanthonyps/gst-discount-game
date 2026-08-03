@@ -30,9 +30,6 @@
         .correct { color: green; font-weight: bold; }
         .wrong { color: red; font-weight: bold; }
     </style>
-    <!-- Firebase Libraries -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
 
@@ -62,7 +59,7 @@
 
     <!-- Teacher Live Dashboard -->
     <div class="card teacher-panel">
-        <h2>Teacher Dashboard (Live Submissions)</h2>
+        <h2>Teacher Dashboard (Live Submissions) <button onclick="fetchData()" style="width: auto; padding: 5px 10px; font-size: 0.8rem;">🔄 Refresh</button></h2>
         <table>
             <thead>
                 <tr>
@@ -80,47 +77,75 @@
 </div>
 
 <script>
-    // --- 1. FIREBASE CONFIGURATION (Replace with your credentials) ---
-    const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-        databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_PROJECT_ID.appspot.com",
-        messagingSenderId: "YOUR_SENDER_ID",
-        appId: "YOUR_APP_ID"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    // --- 1. CONFIGURATION (Replace with your actual keys) ---
+    const BIN_ID = "YOUR_JSONBIN_BIN_ID";
+    const API_KEY = "YOUR_JSONBIN_MASTER_KEY";
+    const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
-    // --- 2. GAME DATA ---
+    // --- 2. ALL 48 ITEMS FROM YOUR IMAGE ---
     const initialItems = [
-        { id: 1, name: "Sports Water Bottle", price: 12.00 }, { id: 2, name: "Football", price: 20.00 },
-        { id: 3, name: "Basketball", price: 28.00 }, { id: 4, name: "Badminton Racket", price: 24.90 },
-        { id: 5, name: "Sports Shoes", price: 49.90 }, { id: 6, name: "Shuttlecock (6 pcs)", price: 8.90 },
-        { id: 7, name: "Energy Bar", price: 2.20 }, { id: 8, name: "Isotonic Drink", price: 2.50 },
-        { id: 9, name: "Sketchbook", price: 3.20 }, { id: 10, name: "Colour Pencils", price: 6.90 },
-        { id: 11, name: "Watercolor Set", price: 12.90 }, { id: 12, name: "Paint Brushes", price: 5.90 },
-        { id: 13, name: "Acrylic Paint Set", price: 15.90 }, { id: 14, name: "Artist Palette", price: 3.50 },
-        { id: 15, name: "Drawing Pencil Set", price: 7.90 }, { id: 16, name: "Eraser", price: 0.90 },
-        { id: 17, name: "Ball Pen", price: 1.20 }, { id: 18, name: "Gel Pen", price: 2.00 },
-        { id: 19, name: "Mechanical Pencil", price: 2.50 }, { id: 20, name: "Highlighter", price: 1.80 },
-        { id: 21, name: "Notebook A5", price: 2.50 }, { id: 22, name: "Sticky Notes", price: 2.20 },
-        { id: 23, name: "Scissors", price: 4.50 }, { id: 24, name: "Glue Stick", price: 2.00 },
-        { id: 25, name: "Pocky", price: 2.20 }, { id: 26, name: "Oreo Cookies", price: 2.80 },
-        { id: 27, name: "Cup Noodles", price: 2.00 }, { id: 28, name: "Yeo's Mango Drink", price: 1.60 },
-        { id: 29, name: "Potato Chips", price: 3.20 }, { id: 30, name: "Chocolate Bar", price: 2.50 },
-        { id: 31, name: "Juice Box", price: 1.50 }, { id: 32, name: "Bottled Water", price: 1.20 },
-        { id: 33, name: "Rubik's Cube", price: 12.90 }, { id: 34, name: "UNO Cards", price: 11.90 },
-        { id: 35, name: "Game Controller", price: 39.90 }, { id: 36, name: "Dinosaur Toy", price: 15.90 },
-        { id: 37, name: "Puzzle (500 pcs)", price: 16.90 }, { id: 38, name: "Building Blocks", price: 24.90 },
-        { id: 39, name: "Playing Cards", price: 3.90 }, { id: 40, name: "Collectible Figure", price: 14.90 },
-        { id: 41, name: "Apples (4 pcs)", price: 4.90 }, { id: 42, name: "Oranges (4 pcs)", price: 5.20 },
-        { id: 43, name: "Bananas (1 bunch)", price: 3.50 }, { id: 44, name: "Carrots (500g)", price: 2.20 },
-        { id: 45, name: "Broccoli", price: 2.80 }, { id: 46, name: "Eggs (10 pcs)", price: 4.80 },
-        { id: 47, name: "Rice (5kg)", price: 12.90 }, { id: 48, name: "Cooking Oil (2L)", price: 9.90 }
+        // Sports & Fitness
+        { id: 1, name: "Sports Water Bottle", price: 12.00 },
+        { id: 2, name: "Football", price: 20.00 },
+        { id: 3, name: "Basketball", price: 28.00 },
+        { id: 4, name: "Badminton Racket", price: 24.90 },
+        { id: 5, name: "Sports Shoes", price: 49.90 },
+        { id: 6, name: "Shuttlecock (6 pcs)", price: 8.90 },
+        { id: 7, name: "Energy Bar", price: 2.20 },
+        { id: 8, name: "Isotonic Drink (500ml)", price: 2.50 },
+
+        // Art Studio
+        { id: 9, name: "Sketchbook", price: 3.20 },
+        { id: 10, name: "Colour Pencils (12 colours)", price: 6.90 },
+        { id: 11, name: "Watercolor Paint Set", price: 12.90 },
+        { id: 12, name: "Paint Brushes (5 pcs)", price: 5.90 },
+        { id: 13, name: "Acrylic Paint Set", price: 15.90 },
+        { id: 14, name: "Artist Palette", price: 3.50 },
+        { id: 15, name: "Drawing Pencil Set", price: 7.90 },
+        { id: 16, name: "Eraser", price: 0.90 },
+
+        // Stationery
+        { id: 17, name: "Ball Pen", price: 1.20 },
+        { id: 18, name: "Gel Pen", price: 2.00 },
+        { id: 19, name: "Mechanical Pencil", price: 2.50 },
+        { id: 20, name: "Highlighter", price: 1.80 },
+        { id: 21, name: "Notebook A5", price: 2.50 },
+        { id: 22, name: "Sticky Notes", price: 2.20 },
+        { id: 23, name: "Scissors", price: 4.50 },
+        { id: 24, name: "Glue Stick", price: 2.00 },
+
+        // Snacks & Drinks
+        { id: 25, name: "Pocky", price: 2.20 },
+        { id: 26, name: "Oreo Cookies", price: 2.80 },
+        { id: 27, name: "Cup Noodles", price: 2.00 },
+        { id: 28, name: "Yeo's Mango Drink", price: 1.60 },
+        { id: 29, name: "Potato Chips", price: 3.20 },
+        { id: 30, name: "Chocolate Bar", price: 2.50 },
+        { id: 31, name: "Juice Box", price: 1.50 },
+        { id: 32, name: "Bottled Water", price: 1.20 },
+
+        // Fun & Play
+        { id: 33, name: "Rubik's Cube", price: 12.90 },
+        { id: 34, name: "UNO Cards", price: 11.90 },
+        { id: 35, name: "Game Controller", price: 39.90 },
+        { id: 36, name: "Dinosaur Toy", price: 15.90 },
+        { id: 37, name: "Puzzle (500 pcs)", price: 16.90 },
+        { id: 38, name: "Building Blocks", price: 24.90 },
+        { id: 39, name: "Playing Cards", price: 3.90 },
+        { id: 40, name: "Collectible Figure", price: 14.90 },
+
+        // Grocery Essentials
+        { id: 41, name: "Apples (4 pcs)", price: 4.90 },
+        { id: 42, name: "Oranges (4 pcs)", price: 5.20 },
+        { id: 43, name: "Bananas (1 bunch)", price: 3.50 },
+        { id: 44, name: "Carrots (500g)", price: 2.20 },
+        { id: 45, name: "Broccoli", price: 2.80 },
+        { id: 46, name: "Eggs (10 pcs)", price: 4.80 },
+        { id: 47, name: "Rice (5kg)", price: 12.90 },
+        { id: 48, name: "Cooking Oil (2L)", price: 9.90 }
     ];
 
+    // --- 3. WHEEL OPTIONS FROM YOUR IMAGE ---
     const wheelOptions = [
         { label: "50% discount", type: "discount", val: 0.50 },
         { label: "20% discount", type: "discount", val: 0.20 },
@@ -134,28 +159,50 @@
 
     let selectedItem = null;
     let selectedRule = null;
-    let currentStock = {};
+    let dbData = { inventory: {}, submissions: [] };
 
-    // Initialize Database Stock if empty
-    db.ref('inventory').once('value', snapshot => {
-        if (!snapshot.exists()) {
-            let initData = {};
-            initialItems.forEach(item => { initData[item.id] = 2; });
-            db.ref('inventory').set(initData);
+    // --- 4. SYNC WITH JSONBIN ---
+    async function fetchData() {
+        if (BIN_ID === "YOUR_JSONBIN_BIN_ID") return;
+        try {
+            const res = await fetch(API_URL, {
+                headers: { "X-Master-Key": API_KEY }
+            });
+            const data = await res.json();
+            dbData = data.record || { inventory: {}, submissions: [] };
+            renderItems();
+            renderDashboard();
+        } catch (e) {
+            console.error("Error fetching data", e);
         }
-    });
+    }
 
-    // --- 3. LIVE INVENTORY UPDATES ---
-    db.ref('inventory').on('value', snapshot => {
-        currentStock = snapshot.val() || {};
-        renderItems();
-    });
+    async function saveData() {
+        if (BIN_ID === "YOUR_JSONBIN_BIN_ID") return;
+        try {
+            await fetch(API_URL, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Master-Key": API_KEY
+                },
+                body: JSON.stringify(dbData)
+            });
+            fetchData();
+        } catch (e) {
+            console.error("Error saving data", e);
+        }
+    }
+
+    // Auto-poll every 3 seconds for live sync
+    setInterval(fetchData, 3000);
 
     function renderItems() {
         const listDiv = document.getElementById('itemsList');
         listDiv.innerHTML = '';
         initialItems.forEach(item => {
-            const qty = currentStock[item.id] !== undefined ? currentStock[item.id] : 2;
+            // Default stock starts at 2
+            const qty = dbData.inventory[item.id] !== undefined ? dbData.inventory[item.id] : 2;
             const div = document.createElement('div');
             div.className = `item-card ${qty <= 0 ? 'out-of-stock' : ''} ${selectedItem?.id === item.id ? 'selected' : ''}`;
             div.innerHTML = `<strong>${item.name}</strong><br>$${item.price.toFixed(2)}<br><span class="badge">Qty: ${qty}</span>`;
@@ -172,7 +219,28 @@
         });
     }
 
-    // --- 4. WHEEL CANVAS ---
+    function renderDashboard() {
+        const tbody = document.getElementById('dashboardBody');
+        tbody.innerHTML = '';
+        const subs = dbData.submissions || [];
+        [...subs].reverse().forEach(sub => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${sub.studentName}</td>
+                <td>${sub.item}</td>
+                <td>$${sub.originalPrice.toFixed(2)}</td>
+                <td>${sub.rule}</td>
+                <td>$${sub.studentAnswer.toFixed(2)}</td>
+                <td class="${sub.isCorrect ? 'correct' : 'wrong'}">${sub.isCorrect ? 'SUCCESS ✅' : 'FAILED ❌'}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    // Initial render
+    renderItems();
+
+    // --- 5. WHEEL DRAWING ---
     const canvas = document.getElementById('wheelCanvas');
     const ctx = canvas.getContext('2d');
     const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#88D49E', '#E8A87C'];
@@ -190,7 +258,6 @@
             ctx.arc(150, 150, 140, sliceAngle, sliceAngle + arc);
             ctx.fill();
 
-            // Text Label
             ctx.save();
             ctx.fillStyle = "#ffffff";
             ctx.font = "bold 12px Arial";
@@ -200,7 +267,6 @@
             ctx.restore();
         }
         
-        // Center Pin Pointer
         ctx.fillStyle = "black";
         ctx.beginPath();
         ctx.moveTo(140, 10); ctx.lineTo(160, 10); ctx.lineTo(150, 30);
@@ -222,7 +288,7 @@
         function animateWheel(timestamp) {
             if (!startTime) startTime = timestamp;
             let progress = timestamp - startTime;
-            let easeOut = Math.pow(progress / duration - 1, 3) + 1; // Cubic ease out
+            let easeOut = Math.pow(progress / duration - 1, 3) + 1;
             let currentAngle = startAngle + easeOut * totalRotation;
 
             drawWheel(currentAngle);
@@ -232,32 +298,32 @@
             } else {
                 let finalAngle = currentAngle % (Math.PI * 2);
                 let sliceArc = (2 * Math.PI) / wheelOptions.length;
-                // Compute winning index relative to top pointer (3PI/2 radians)
                 let winningIndex = Math.floor(((Math.PI * 2 - (finalAngle % (Math.PI * 2))) + Math.PI * 1.5) % (Math.PI * 2) / sliceArc);
                 selectedRule = wheelOptions[winningIndex];
 
                 document.getElementById('wheelResultText').innerText = selectedRule.label;
                 document.getElementById('calcSection').style.display = 'block';
                 document.getElementById('feedback').innerText = '';
+                document.getElementById('spinBtn').disabled = false;
             }
         }
         requestAnimationFrame(animateWheel);
     }
 
-    // --- 5. VERIFICATION & DEDUCTION ---
-    function submitAnswer() {
+    // --- 6. SUBMISSION & VERIFICATION ---
+    async function submitAnswer() {
         const studentName = document.getElementById('studentName').value.trim();
         const studentAns = parseFloat(document.getElementById('studentAnswer').value);
         if (isNaN(studentAns)) { alert("Please enter a valid price!"); return; }
 
-        // Compute correct answer
+        // Calculate correct price
         let correctPrice = selectedItem.price;
         if (selectedRule.type === 'discount') {
             correctPrice = correctPrice * (1 - selectedRule.val);
         } else {
             correctPrice = correctPrice * (1 + selectedRule.val);
         }
-        correctPrice = Math.round(correctPrice * 100) / 100; // Round to 2 decimals
+        correctPrice = Math.round(correctPrice * 100) / 100;
 
         const isCorrect = Math.abs(studentAns - correctPrice) < 0.01;
         const feedbackEl = document.getElementById('feedback');
@@ -266,17 +332,17 @@
             feedbackEl.innerText = "🎉 Correct! Good job!";
             feedbackEl.style.color = "green";
 
-            // Deduct stock in Firebase Database live
-            db.ref(`inventory/${selectedItem.id}`).transaction(currentQty => {
-                return (currentQty || 1) - 1;
-            });
+            // Deduct inventory stock
+            const currentQty = dbData.inventory[selectedItem.id] !== undefined ? dbData.inventory[selectedItem.id] : 2;
+            dbData.inventory[selectedItem.id] = Math.max(0, currentQty - 1);
         } else {
             feedbackEl.innerText = "❌ Incorrect amount. Please try again!";
             feedbackEl.style.color = "red";
         }
 
-        // Push submission log to Teacher Dashboard via Firebase
-        db.ref('submissions').push({
+        // Record student submission
+        if (!dbData.submissions) dbData.submissions = [];
+        dbData.submissions.push({
             studentName,
             item: selectedItem.name,
             originalPrice: selectedItem.price,
@@ -285,23 +351,9 @@
             isCorrect,
             timestamp: Date.now()
         });
-    }
 
-    // --- 6. LIVE TEACHER DASHBOARD ---
-    db.ref('submissions').on('child_added', snapshot => {
-        const sub = snapshot.val();
-        const tbody = document.getElementById('dashboardBody');
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${sub.studentName}</td>
-            <td>${sub.item}</td>
-            <td>$${sub.originalPrice.toFixed(2)}</td>
-            <td>${sub.rule}</td>
-            <td>$${sub.studentAnswer.toFixed(2)}</td>
-            <td class="${sub.isCorrect ? 'correct' : 'wrong'}">${sub.isCorrect ? 'SUCCESS ✅' : 'FAILED ❌'}</td>
-        `;
-        tbody.prepend(row); // Most recent attempts at top
-    });
+        await saveData();
+    }
 </script>
 
 </body>
