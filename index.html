@@ -59,7 +59,11 @@
 
     <!-- Teacher Live Dashboard -->
     <div class="card teacher-panel">
-        <h2>Teacher Dashboard (Live Submissions) <button onclick="fetchData()" style="width: auto; padding: 5px 10px; font-size: 0.8rem;">🔄 Refresh</button></h2>
+        <h2>
+    Teacher Dashboard (Live Submissions) 
+    <button onclick="fetchData()" style="width: auto; padding: 5px 10px; font-size: 0.8rem;">🔄 Refresh</button>
+    <button onclick="resetAllData()" style="background: #dc3545; width: auto; padding: 5px 10px; font-size: 0.8rem; margin-left: 10px;">🗑️ Reset All Data</button>
+</h2>
         <table>
             <thead>
                 <tr>
@@ -665,6 +669,22 @@
         });
 
         await saveData();
+    }
+
+    // --- 7. TEACHER RESET FUNCTION (PASSWORD PROTECTED) ---
+    async function resetAllData() {
+        const password = prompt("Enter Teacher Password to reset:");
+        
+        // You can change '1234' below to whatever secret password you prefer!
+        if (password === "reset2026") { 
+            if (confirm("Are you sure you want to reset all item quantities back to 2 and clear all student submissions?")) {
+                dbData = { inventory: {}, submissions: [] };
+                await saveData();
+                alert("Game reset successfully!");
+            }
+        } else if (password !== null) {
+            alert("Incorrect password!");
+        }
     }
 </script>
 
