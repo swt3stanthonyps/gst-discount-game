@@ -5,17 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Math Shopping Game</title>
     <style>
+        * { box-sizing: border-box; } /* Ensures proper sizing in grid */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
         .container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         h2 { margin-top: 0; color: #333; }
         
-        /* Items Grid */
-        .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; max-height: 400px; overflow-y: auto; }
-        .item-card { border: 2px solid #e0e0e0; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; transition: 0.2s; }
+        /* Items Grid & Cards Styling */
+        .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; max-height: 400px; overflow-y: auto; padding: 5px; }
+        .item-card { 
+            border: 2px solid #e0e0e0; 
+            border-radius: 8px; 
+            padding: 10px; 
+            text-align: center; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            background: #fff;
+            color: #333; /* Ensures text color is explicitly visible */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 100px;
+        }
+        .item-card:hover { border-color: #007bff; }
         .item-card.selected { border-color: #007bff; background: #e7f1ff; }
         .item-card.out-of-stock { opacity: 0.4; cursor: not-allowed; background: #f5f5f5; }
-        .badge { background: #007bff; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.8em; }
+        
+        .item-title { font-weight: bold; font-size: 0.9rem; margin-bottom: 4px; display: block; word-break: break-word; }
+        .item-price { color: #28a745; font-weight: 600; margin-bottom: 6px; display: block; }
+        .badge { background: #007bff; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.75em; align-self: center; }
         
         /* Wheel Canvas */
         #wheelCanvas { width: 100%; max-width: 300px; height: auto; display: block; margin: 0 auto; }
@@ -37,7 +55,7 @@
     <!-- Student Input & Item Selection -->
     <div class="card">
         <h2>1. Choose an Item</h2>
-        <input type="text" id="studentName" placeholder="Enter your name..." style="width: 95%; padding: 8px; margin-bottom: 10px;">
+        <input type="text" id="studentName" placeholder="Enter your name..." style="width: 100%; padding: 8px; margin-bottom: 10px;">
         <div class="items-grid" id="itemsList"></div>
     </div>
 
@@ -51,7 +69,7 @@
             <p><strong>Selected Item:</strong> <span id="selectedItemName">-</span> ($<span id="selectedItemPrice">0</span>)</p>
             <p><strong>Wheel Result:</strong> <span id="wheelResultText">-</span></p>
             <label>Your Calculated Final Price ($):</label>
-            <input type="text" id="studentAnswer" placeholder="0.00" style="width: 95%; padding: 8px; margin-top: 5px;">
+            <input type="text" id="studentAnswer" placeholder="0.00" style="width: 100%; padding: 8px; margin-top: 5px;">
             <button onclick="submitAnswer()" style="background: #007bff; margin-top: 10px;">Submit Answer</button>
         </div>
         <div id="feedback" style="margin-top: 10px; font-weight: bold; text-align: center;"></div>
@@ -84,8 +102,6 @@
     // --- 1. CONFIGURATION ---
     const BIN_ID = "6a702ebef5f4af5e29e3a2a0";
     const API_KEY = "$2a$10$GE4N2XeGa6JxUbuB5bQ0eOUzdj97wKhL0O8bzPYjQ8DVWzwjB57Wi";
-    
-    // ✅ FIXED: Using BIN_ID variable properly instead of unquoted string
     const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
     // --- 2. ALL 48 ITEMS ---
@@ -168,53 +184,26 @@
     let hasSpun = false; 
     let dbData = { inventory: {}, submissions: [] };
 
-    // --- 4. SYNC WITH JSONBIN ---
-    async function fetchData() {
-        if (!BIN_ID) return;
-        try {
-            const res = await fetch(API_URL, {
-                method: "GET",
-                headers: { "X-Master-Key": API_KEY }
-            });
-            const data = await res.json();
-            dbData = data.record || { inventory: {}, submissions: [] };
-        } catch (e) {
-            console.error("Error fetching data:", e);
-        } finally {
-            // Always render items even if network fetch fails
-            renderItems();
-            renderDashboard();
-        }
-    }
-
-    async function saveData() {
-        if (!BIN_ID) return;
-        try {
-            await fetch(API_URL, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-Master-Key": API_KEY
-                },
-                body: JSON.stringify(dbData)
-            });
-            fetchData();
-        } catch (e) {
-            console.error("Error saving data:", e);
-        }
-    }
-
-    // Auto-poll every 3 seconds
-    setInterval(fetchData, 3000);
-
+    // --- 4. RENDER FUNCTIONS ---
     function renderItems() {
         const listDiv = document.getElementById('itemsList');
+        if (!listDiv) return;
+        
         listDiv.innerHTML = '';
         initialItems.forEach(item => {
-            const qty = dbData.inventory[item.id] !== undefined ? dbData.inventory[item.id] : 2;
+            const qty = (dbData.inventory && dbData.inventory[item.id] !== undefined) 
+                ? dbData.inventory[item.id] 
+                : 2;
+                
             const div = document.createElement('div');
             div.className = `item-card ${qty <= 0 ? 'out-of-stock' : ''} ${selectedItem?.id === item.id ? 'selected' : ''}`;
-            div.innerHTML = `<strong>${item.name}</strong><br>$${item.price.toFixed(2)}<br><span class="badge">Qty: ${qty}</span>`;
+            
+            // Structured innerHTML with clear class hooks
+            div.innerHTML = `
+                <span class="item-title">${item.name}</span>
+                <span class="item-price">$${item.price.toFixed(2)}</span>
+                <span class="badge">Qty: ${qty}</span>
+            `;
             
             if (qty > 0) {
                 div.onclick = () => {
@@ -237,6 +226,7 @@
 
     function renderDashboard() {
         const tbody = document.getElementById('dashboardBody');
+        if (!tbody) return;
         tbody.innerHTML = '';
         const subs = dbData.submissions || [];
         [...subs].reverse().forEach(sub => {
@@ -253,7 +243,46 @@
         });
     }
 
-    // --- 5. WHEEL DRAWING ---
+    // --- 5. SYNC WITH JSONBIN ---
+    async function fetchData() {
+        if (!BIN_ID) return;
+        try {
+            const res = await fetch(API_URL, {
+                method: "GET",
+                headers: { "X-Master-Key": API_KEY }
+            });
+            const data = await res.json();
+            if (data.record) {
+                dbData = data.record;
+            }
+        } catch (e) {
+            console.error("Error fetching data:", e);
+        } finally {
+            renderItems();
+            renderDashboard();
+        }
+    }
+
+    async function saveData() {
+        if (!BIN_ID) return;
+        try {
+            await fetch(API_URL, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Master-Key": API_KEY
+                },
+                body: JSON.stringify(dbData)
+            });
+            fetchData();
+        } catch (e) {
+            console.error("Error saving data:", e);
+        }
+    }
+
+    setInterval(fetchData, 3000);
+
+    // --- 6. WHEEL DRAWING ---
     const canvas = document.getElementById('wheelCanvas');
     const ctx = canvas.getContext('2d');
     const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#88D49E', '#E8A87C'];
@@ -323,7 +352,7 @@
         requestAnimationFrame(animateWheel);
     }
 
-    // --- 6. SUBMISSION & VERIFICATION ---
+    // --- 7. SUBMISSION & VERIFICATION ---
     async function submitAnswer() {
         const studentName = document.getElementById('studentName').value.trim();
         const rawInput = document.getElementById('studentAnswer').value.trim();
@@ -359,7 +388,11 @@
             feedbackEl.innerText = "🎉 Correct! Good job!";
             feedbackEl.style.color = "green";
 
-            const currentQty = dbData.inventory[selectedItem.id] !== undefined ? dbData.inventory[selectedItem.id] : 2;
+            const currentQty = (dbData.inventory && dbData.inventory[selectedItem.id] !== undefined) 
+                ? dbData.inventory[selectedItem.id] 
+                : 2;
+            
+            if (!dbData.inventory) dbData.inventory = {};
             dbData.inventory[selectedItem.id] = Math.max(0, currentQty - 1);
         } else {
             feedbackEl.innerText = `❌ Incorrect amount. Expected $${correctPrice.toFixed(2)}. Please try again!`;
@@ -380,7 +413,7 @@
         await saveData();
     }
 
-    // --- 7. TEACHER RESET FUNCTION ---
+    // --- 8. TEACHER RESET FUNCTION ---
     async function resetAllData() {
         const password = prompt("Enter Teacher Password to reset:");
         if (password === "reset2026") { 
@@ -394,10 +427,10 @@
         }
     }
 
-    // Initial load
+    // INITIAL STARTUP: Draw elements right away
     renderItems();
-    fetchData();
     drawWheel();
+    fetchData();
 </script>
 
 </body>
