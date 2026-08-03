@@ -82,11 +82,11 @@
 
 <script>
     // --- 1. CONFIGURATION ---
-    // ⚠️ REPLACE THESE TWO STRINGS WITH YOUR ACTUAL KEYS FROM JSONBIN.IO
     const BIN_ID = "6a702ebef5f4af5e29e3a2a0";
     const API_KEY = "$2a$10$GE4N2XeGa6JxUbuB5bQ0eOUzdj97wKhL0O8bzPYjQ8DVWzwjB57Wi";
     
-    const API_URL = `https://api.jsonbin.io/v3/b/${6a702ebef5f4af5e29e3a2a}`;
+    // ✅ FIXED: Using BIN_ID variable properly instead of unquoted string
+    const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
     // --- 2. ALL 48 ITEMS ---
     const initialItems = [
@@ -165,12 +165,12 @@
 
     let selectedItem = null;
     let selectedRule = null;
-    let hasSpun = false; // Prevents multiple spins for the same item
+    let hasSpun = false; 
     let dbData = { inventory: {}, submissions: [] };
 
     // --- 4. SYNC WITH JSONBIN ---
     async function fetchData() {
-        if (BIN_ID === "YOUR_JSONBIN_BIN_ID" || !BIN_ID) return;
+        if (!BIN_ID) return;
         try {
             const res = await fetch(API_URL, {
                 method: "GET",
@@ -178,15 +178,17 @@
             });
             const data = await res.json();
             dbData = data.record || { inventory: {}, submissions: [] };
-            renderItems();
-            renderDashboard();
         } catch (e) {
             console.error("Error fetching data:", e);
+        } finally {
+            // Always render items even if network fetch fails
+            renderItems();
+            renderDashboard();
         }
     }
 
     async function saveData() {
-        if (BIN_ID === "YOUR_JSONBIN_BIN_ID" || !BIN_ID) return;
+        if (!BIN_ID) return;
         try {
             await fetch(API_URL, {
                 method: "PUT",
@@ -217,9 +219,8 @@
             if (qty > 0) {
                 div.onclick = () => {
                     selectedItem = item;
-                    hasSpun = false; // Reset spin restriction for newly selected item
+                    hasSpun = false; 
                     
-                    // Reset UI elements
                     document.getElementById('selectedItemName').innerText = item.name;
                     document.getElementById('selectedItemPrice').innerText = item.price.toFixed(2);
                     document.getElementById('calcSection').style.display = 'none';
@@ -313,7 +314,7 @@
                 let winningIndex = Math.floor(((Math.PI * 2 - (finalAngle % (Math.PI * 2))) + Math.PI * 1.5) % (Math.PI * 2) / sliceArc);
                 selectedRule = wheelOptions[winningIndex];
 
-                hasSpun = true; // Mark item as spun
+                hasSpun = true; 
                 document.getElementById('wheelResultText').innerText = selectedRule.label;
                 document.getElementById('calcSection').style.display = 'block';
                 document.getElementById('feedback').innerText = '';
@@ -334,7 +335,6 @@
             return; 
         }
 
-        // Decimal Validation Rule (Whole numbers or exactly 2 decimal places)
         if (rawInput.includes('.')) {
             const decimalPlaces = rawInput.split('.')[1].length;
             if (decimalPlaces !== 2) {
@@ -344,7 +344,6 @@
             }
         }
 
-        // Calculate expected answer
         let correctPrice = selectedItem.price;
         if (selectedRule.type === 'discount') {
             correctPrice = correctPrice * (1 - selectedRule.val);
@@ -360,7 +359,6 @@
             feedbackEl.innerText = "🎉 Correct! Good job!";
             feedbackEl.style.color = "green";
 
-            // Reduce item stock by 1
             const currentQty = dbData.inventory[selectedItem.id] !== undefined ? dbData.inventory[selectedItem.id] : 2;
             dbData.inventory[selectedItem.id] = Math.max(0, currentQty - 1);
         } else {
@@ -368,7 +366,6 @@
             feedbackEl.style.color = "red";
         }
 
-        // Add to live submissions list
         if (!dbData.submissions) dbData.submissions = [];
         dbData.submissions.push({
             studentName,
@@ -397,7 +394,8 @@
         }
     }
 
-    // Initial render call
+    // Initial load
+    renderItems();
     fetchData();
     drawWheel();
 </script>
