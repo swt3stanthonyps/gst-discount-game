@@ -378,17 +378,16 @@
             }
         }
 
-        let correctPrice = selectedItem.price;
+        let rawPrice = selectedItem.price;
 
         if (selectedRule.type === 'discount') {
-            correctPrice = selectedItem.price * (1 - selectedRule.val);
+            rawPrice = selectedItem.price * (1 - selectedRule.val);
         } else {
-            correctPrice = selectedItem.price * (1 + selectedRule.val);
+            rawPrice = selectedItem.price * (1 + selectedRule.val);
         }
 
-        // ACCURATE HALF-UP ROUNDING FIX:
-        // Math.round((val + Number.EPSILON) * 100) / 100 ensures accurate standard rounding
-        correctPrice = Math.round((correctPrice + Number.EPSILON) * 100) / 100;
+        // Standard financial half-up rounding (fixes JavaScript float precision bugs):
+        const correctPrice = Math.floor(rawPrice * 100 + 0.5000001) / 100;
 
         const isCorrect = Math.abs(studentAns - correctPrice) < 0.001;
 
