@@ -380,14 +380,14 @@
 
         let correctPrice = selectedItem.price;
 
-if (selectedRule.type === 'discount') {
-    correctPrice = selectedItem.price * (1 - selectedRule.val);
-} else {
-    correctPrice = selectedItem.price * (1 + selectedRule.val);
-}
+        if (selectedRule.type === 'discount') {
+            correctPrice = selectedItem.price * (1 - selectedRule.val);
+        } else {
+            correctPrice = selectedItem.price * (1 + selectedRule.val);
+        }
 
-// Adding Number.EPSILON fixes the floating-point precision bug
-correctPrice = Math.round((correctPrice + Number.EPSILON) * 100) / 100;
+        // Accurately converts to 2 decimal places using standard float string rounding
+        correctPrice = parseFloat(correctPrice.toFixed(2));
 
         const isCorrect = Math.abs(studentAns - correctPrice) < 0.001;
 
