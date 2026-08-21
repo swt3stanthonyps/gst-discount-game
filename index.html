@@ -385,7 +385,8 @@
             correctPrice = correctPrice * (1 + selectedRule.val);
         }
         
-        correctPrice = Math.round(correctPrice * 100) / 100;
+        // Number.EPSILON prevents JavaScript floating-point rounding errors
+        correctPrice = Math.round((correctPrice + Number.EPSILON) * 100) / 100;
 
         const isCorrect = Math.abs(studentAns - correctPrice) < 0.001;
 
