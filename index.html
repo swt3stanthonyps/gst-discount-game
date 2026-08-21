@@ -357,7 +357,7 @@
         requestAnimationFrame(animateWheel);
     }
 
-    // --- 7. SUBMISSION & VERIFICATION ---
+// --- 7. SUBMISSION & VERIFICATION ---
     async function submitAnswer() {
         const studentName = document.getElementById('studentName').value.trim();
         const rawInput = document.getElementById('studentAnswer').value.trim();
@@ -386,8 +386,9 @@
             correctPrice = selectedItem.price * (1 + selectedRule.val);
         }
 
-        // Accurately converts to 2 decimal places using standard float string rounding
-        correctPrice = parseFloat(correctPrice.toFixed(2));
+        // ACCURATE HALF-UP ROUNDING FIX:
+        // Math.round((val + Number.EPSILON) * 100) / 100 ensures accurate standard rounding
+        correctPrice = Math.round((correctPrice + Number.EPSILON) * 100) / 100;
 
         const isCorrect = Math.abs(studentAns - correctPrice) < 0.001;
 
